@@ -1,15 +1,20 @@
 import { createClient } from "next-sanity";
-import imageUrlBuilder from "@sanity/image-url";
+import { createImageUrlBuilder } from "@sanity/image-url";
 
 export const client = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
-  dataset: "testing", // (Or whatever your dataset name was!)
+  dataset: "testing", 
   apiVersion: "2024-01-01",
   useCdn: false,
+  // 🔒 This tells Next.js to look for a secret variable on Vercel!
+  token: process.env.SANITY_API_READ_TOKEN, 
+  stega: {
+    enabled: true, 
+    studioUrl: "YOUR_LIVE_STUDIO_URL", // e.g., "https://inspira-studio.sanity.studio"
+  },
 });
 
-// This builds the image URLs for Next.js to use
-const builder = imageUrlBuilder(client);
+const builder = createImageUrlBuilder(client);
 export function urlFor(source: any) {
   return builder.image(source);
 }
