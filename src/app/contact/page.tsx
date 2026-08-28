@@ -1,24 +1,63 @@
 import { client } from "../../sanity";
-// 1. Import your new component at the top!
-import ContactForm from "../../components/ContactForm";
+import Hero from "../../components/Hero";
+import DynamicForm from "../../components/DynamicForm";
+import HtmlBlock from "../../components/HtmlBlock";
+import { draftMode } from 'next/headers';
 
 export const revalidate = 0;
 
 export default async function Contact() {
-  const sanityData = await client.fetch(`*[_type == "page" && slug.current == "contact"][0]`);
+  // 1. Check for Draft Mode
+  const draft = await draftMode();
+  const isEnabled = draft.isEnabled;
+
+  // 2. Fetch the data with the dynamic perspective
+  const pageData = await client.fetch(
+    `*[_type == "page" && slug.current == "contact"][0]`,
+    {},
+    {
+      stega: true,
+      cache: 'no-store',
+      perspective: isEnabled ? 'previewDrafts' : 'published'
+    }
+  );
+
+  if (!pageData) {
+    return <div style={{ padding: "50px", textAlign: "center" }}>Contact page not found in Sanity yet!</div>;
+  }
 
   return (
-    <main style={{ maxWidth: "800px", margin: "0 auto", padding: "50px", fontFamily: "Arial, sans-serif" }}>
+    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "50px" }}>
       
-      <h1 style={{ fontSize: "3rem", color: "#111827", marginBottom: "10px" }}>
-        {sanityData?.heading || "Contact Us"}
-      </h1>
-      <p style={{ fontSize: "1.2rem", color: "#4B5563", lineHeight: "1.6", marginBottom: "40px" }}>
-        {sanityData?.body || "Please fill out the form below."}
-      </p>
+      {/* Draft Mode Banner for Contact Page */}
+      {isEnabled && (
+        <div style={{ backgroundColor: "#FEF08A", color: "#854D0E", padding: "10px 20px", borderRadius: "6px", marginBottom: "20px", fontWeight: "bold" }}>
+          ⚡ You are viewing unpublished drafts! 
+          <a href="/api/disable-draft?slug=/contact" style={{ color: "#854D0E", marginLeft: "10px" }}>[Exit]</a>
+        </div>
+      )}
 
-      {/* 2. Drop the component right here! */}
-      <ContactForm />
+      {/* Inject Custom Code Blocks */}
+      {pageData?.customCss && (
+        <style dangerouslySetInnerHTML={{ __html: pageData.customCss }} />
+      )}
+      {pageData?.headScripts && (
+        <div dangerouslySetInnerHTML={{ __html: pageData.headScripts }} />
+      )}
+
+      {/* THE TRAFFIC COP (Page Builder Loop) */}
+      {pageData?.pageBuilder?.map((block: any, index: number) => {
+        switch (block._type) {
+          case 'heroSection':
+            return <Hero key={index} data={block} />;
+          case 'formComponent':
+            return <DynamicForm key={index} formData={block} />;
+          case 'htmlBlock':
+            return <HtmlBlock key={index} data={block} />;
+          default:
+            return <div key={index}>Component {block._type} is missing!</div>;
+        }
+      })}
 
     </main>
   );

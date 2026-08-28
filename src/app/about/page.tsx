@@ -1,34 +1,63 @@
-import { client, urlFor } from "../../sanity";
-import DynamicForm from "../../components/DynamicForm"; 
+import { client } from "../../sanity";
+import Hero from "../../components/Hero";
+import DynamicForm from "../../components/DynamicForm";
+import HtmlBlock from "../../components/HtmlBlock";
+import { draftMode } from 'next/headers';
+
+export const revalidate = 0;
 
 export default async function About() {
-  const sanityData = await client.fetch(`*[_type == "page" && slug.current == "about"][0]`);
+  // 1. Check for Draft Mode (Restored!)
+  const draft = await draftMode();
+  const isEnabled = draft.isEnabled;
 
-  if (!sanityData) {
+  // 2. Fetch the data with the dynamic perspective
+  const pageData = await client.fetch(
+    `*[_type == "page" && slug.current == "about"][0]`,
+    {},
+    {
+      stega: true,
+      cache: 'no-store',
+      perspective: isEnabled ? 'previewDrafts' : 'published'
+    }
+  );
+
+  if (!pageData) {
     return <div style={{ padding: "50px", textAlign: "center" }}>Page not found in Sanity yet!</div>;
   }
 
   return (
-    <main style={{ maxWidth: "800px", margin: "0 auto", padding: "50px" }}>
+    <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "50px" }}>
       
-      <h1>{sanityData.heading}</h1>
-      
-      {sanityData.mainImage && (
-        <img 
-          src={urlFor(sanityData.mainImage).width(800).url()} 
-          alt="About Page Image"
-          style={{ width: "100%", borderRadius: "10px", marginTop: "20px", marginBottom: "20px" }}
-        />
+      {/* Draft Mode Banner for About Page */}
+      {isEnabled && (
+        <div style={{ backgroundColor: "#FEF08A", color: "#854D0E", padding: "10px 20px", borderRadius: "6px", marginBottom: "20px", fontWeight: "bold" }}>
+          ⚡ You are viewing unpublished drafts! 
+          <a href="/api/disable-draft?slug=/about" style={{ color: "#854D0E", marginLeft: "10px" }}>[Exit]</a>
+        </div>
       )}
 
-      <p>{sanityData.body}</p>
+      {/* Inject Custom Code Blocks */}
+      {pageData?.customCss && (
+        <style dangerouslySetInnerHTML={{ __html: pageData.customCss }} />
+      )}
+      {pageData?.headScripts && (
+        <div dangerouslySetInnerHTML={{ __html: pageData.headScripts }} />
+      )}
 
-      <div style={{ marginTop: "60px" }}>
-        {/* We add a quick border-none override here just in case you don't want the H2 underline above the form! */}
-        <h2 style={{ borderBottom: "none" }}>Have Questions?</h2>
-        
-        <DynamicForm formData={sanityData?.leadForm} />
-      </div>
+      {/* THE TRAFFIC COP (Page Builder Loop) */}
+      {pageData?.pageBuilder?.map((block: any, index: number) => {
+        switch (block._type) {
+          case 'heroSection':
+            return <Hero key={index} data={block} />;
+          case 'formComponent':
+            return <DynamicForm key={index} formData={block} />;
+          case 'htmlBlock':
+            return <HtmlBlock key={index} data={block} />;
+          default:
+            return <div key={index}>Component {block._type} is missing!</div>;
+        }
+      })}
 
     </main>
   );
