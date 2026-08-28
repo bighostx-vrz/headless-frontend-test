@@ -32,9 +32,10 @@ export default async function BlogPost(props: { params: Promise<{ slug: string }
     return <div style={{ padding: "50px", textAlign: "center" }}>Post not found!</div>;
   }
 
-  // FIX 2: Dynamically map your specific Sanity Color Picker fields!
-  const bgColor = postData.category?.backgroundColor?.hex || '#ffffff'; 
-  const textColor = postData.category?.mainTextColor?.hex || '#111827'; 
+  // FIX 2: EXACT SCHEMA MATCH! 
+  // Mapped perfectly to 'bgColor', 'textColor', and 'accentColor' from your schema.
+  const bgColor = postData.category?.bgColor?.hex || '#ffffff'; 
+  const textColor = postData.category?.textColor?.hex || '#111827'; 
   const accentColor = postData.category?.accentColor?.hex || '#3B82F6'; 
 
   const renderBody = () => {
