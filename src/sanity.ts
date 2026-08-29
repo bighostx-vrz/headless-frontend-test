@@ -2,14 +2,14 @@ import { createClient } from "next-sanity";
 import imageUrlBuilder from "@sanity/image-url";
 
 export const client = createClient({
-  projectId: "e3kyrsn9", // YOUR TRUE ID
-  dataset: "testing",    // REPLACE THIS with whatever word is in your Datasets tab!
+  projectId: "e3kyrsn9", 
+  dataset: "testing", 
   apiVersion: "2024-01-01",
   useCdn: false, 
   stega: {
     studioUrl: process.env.NODE_ENV === 'development'
       ? "http://localhost:3333"
-      : "https://e3kyrsn9.sanity.studio",
+      : "https://bighostx-admin.sanity.studio", // <-- YOUR NEW LIVE STUDIO URL
   },
 });
 
