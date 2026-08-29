@@ -3,6 +3,7 @@ import { client, urlFor } from "../sanity";
 import DynamicForm from "../components/DynamicForm";
 import Hero from "../components/Hero"; 
 import HtmlBlock from "../components/HtmlBlock";
+import SectionBlock from "../components/SectionBlock"; // 1. IMPORT THE SECTION BLOCK
 
 export const revalidate = 0;
 
@@ -13,18 +14,26 @@ export default async function Home() {
   const pageData = await client.fetch(
     `*[_type == "page" && slug.current == "home"][0]`,
     {},
-    // FIXED: Stega is now tied to isEnabled!
-    { stega: isEnabled, cache: 'no-store', perspective: isEnabled ? 'previewDrafts' : 'published' }
+    { 
+      stega: isEnabled, 
+      cache: 'no-store', 
+      perspective: isEnabled ? 'previewDrafts' : 'published',
+      token: process.env.SANITY_API_READ_TOKEN // 2. ADD TOKEN FOR DRAFTS
+    }
   );
 
-  // FIXED: Fetching the CORRECT color schema fields!
   const postsData = await client.fetch(
     `*[_type == "post" && isFeatured == true] | order(_createdAt desc){
       ...,
       category->{ title, bgColor, textColor, accentColor, titleColor }
     }`,
     {},
-    { stega: isEnabled, cache: 'no-store', perspective: isEnabled ? 'previewDrafts' : 'published' }
+    { 
+      stega: isEnabled, 
+      cache: 'no-store', 
+      perspective: isEnabled ? 'previewDrafts' : 'published',
+      token: process.env.SANITY_API_READ_TOKEN // 2. ADD TOKEN FOR DRAFTS (Posts need it too!)
+    }
   );
 
   return (
@@ -41,6 +50,7 @@ export default async function Home() {
           case 'heroSection': return <Hero key={index} data={block} />;
           case 'formComponent': return <DynamicForm key={index} formData={block} />;
           case 'htmlBlock': return <HtmlBlock key={index} data={block} />;
+          case 'sectionBlock': return <SectionBlock key={index} data={block} />; // 3. ADD TO SWITCH STATEMENT
           default: return null;
         }
       })}

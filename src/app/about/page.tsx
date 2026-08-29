@@ -2,6 +2,7 @@ import { client } from "../../sanity";
 import Hero from "../../components/Hero";
 import DynamicForm from "../../components/DynamicForm";
 import HtmlBlock from "../../components/HtmlBlock";
+import SectionBlock from "../../components/SectionBlock"; // 1. IMPORT THE NEW BLOCK
 import { draftMode } from 'next/headers';
 
 export const revalidate = 0;
@@ -14,9 +15,10 @@ export default async function About() {
     `*[_type == "page" && slug.current == "about"][0]`,
     {},
     {
-      stega: isEnabled, // Tied to Draft Mode
+      stega: isEnabled, 
       cache: 'no-store',
-      perspective: isEnabled ? 'previewDrafts' : 'published'
+      perspective: isEnabled ? 'previewDrafts' : 'published',
+      token: process.env.SANITY_API_READ_TOKEN // 2. ADD TOKEN FOR DRAFTS
     }
   );
 
@@ -46,6 +48,7 @@ export default async function About() {
           case 'heroSection': return <Hero key={index} data={block} />;
           case 'formComponent': return <DynamicForm key={index} formData={block} />;
           case 'htmlBlock': return <HtmlBlock key={index} data={block} />;
+          case 'sectionBlock': return <SectionBlock key={index} data={block} />; // 3. ADD TO SWITCH STATEMENT!
           default: return null;
         }
       })}
