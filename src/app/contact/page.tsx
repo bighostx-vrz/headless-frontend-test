@@ -7,16 +7,14 @@ import { draftMode } from 'next/headers';
 export const revalidate = 0;
 
 export default async function Contact() {
-  // 1. Check for Draft Mode
   const draft = await draftMode();
   const isEnabled = draft.isEnabled;
 
-  // 2. Fetch the data with the dynamic perspective
   const pageData = await client.fetch(
     `*[_type == "page" && slug.current == "contact"][0]`,
     {},
     {
-      stega: true,
+      stega: isEnabled, // Tied to Draft Mode
       cache: 'no-store',
       perspective: isEnabled ? 'previewDrafts' : 'published'
     }
@@ -29,7 +27,6 @@ export default async function Contact() {
   return (
     <main style={{ maxWidth: "1000px", margin: "0 auto", padding: "50px" }}>
       
-      {/* Draft Mode Banner for Contact Page */}
       {isEnabled && (
         <div style={{ backgroundColor: "#FEF08A", color: "#854D0E", padding: "10px 20px", borderRadius: "6px", marginBottom: "20px", fontWeight: "bold" }}>
           ⚡ You are viewing unpublished drafts! 
@@ -37,7 +34,6 @@ export default async function Contact() {
         </div>
       )}
 
-      {/* Inject Custom Code Blocks */}
       {pageData?.customCss && (
         <style dangerouslySetInnerHTML={{ __html: pageData.customCss }} />
       )}
@@ -45,17 +41,12 @@ export default async function Contact() {
         <div dangerouslySetInnerHTML={{ __html: pageData.headScripts }} />
       )}
 
-      {/* THE TRAFFIC COP (Page Builder Loop) */}
       {pageData?.pageBuilder?.map((block: any, index: number) => {
         switch (block._type) {
-          case 'heroSection':
-            return <Hero key={index} data={block} />;
-          case 'formComponent':
-            return <DynamicForm key={index} formData={block} />;
-          case 'htmlBlock':
-            return <HtmlBlock key={index} data={block} />;
-          default:
-            return <div key={index}>Component {block._type} is missing!</div>;
+          case 'heroSection': return <Hero key={index} data={block} />;
+          case 'formComponent': return <DynamicForm key={index} formData={block} />;
+          case 'htmlBlock': return <HtmlBlock key={index} data={block} />;
+          default: return null;
         }
       })}
 

@@ -13,17 +13,18 @@ export default async function Home() {
   const pageData = await client.fetch(
     `*[_type == "page" && slug.current == "home"][0]`,
     {},
-    { stega: true, cache: 'no-store', perspective: isEnabled ? 'previewDrafts' : 'published' }
+    // FIXED: Stega is now tied to isEnabled!
+    { stega: isEnabled, cache: 'no-store', perspective: isEnabled ? 'previewDrafts' : 'published' }
   );
 
-  // UPDATED: Fetching Category Themes for the Homepage cards
+  // FIXED: Fetching the CORRECT color schema fields!
   const postsData = await client.fetch(
     `*[_type == "post" && isFeatured == true] | order(_createdAt desc){
       ...,
-      category->{ title, themeColor }
+      category->{ title, bgColor, textColor, accentColor, titleColor }
     }`,
     {},
-    { stega: true, cache: 'no-store', perspective: isEnabled ? 'previewDrafts' : 'published' }
+    { stega: isEnabled, cache: 'no-store', perspective: isEnabled ? 'previewDrafts' : 'published' }
   );
 
   return (
@@ -55,14 +56,16 @@ export default async function Home() {
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px", marginTop: "20px" }}>
           {postsData.map((post: any) => {
-            // Dynamic Theme Extraction
-            const themeHex = post.category?.themeColor?.hex || post.category?.themeColor || '#e5e7eb';
+            // Mapping the exact schema color fields
+            const borderHex = post.category?.accentColor?.hex || '#e5e7eb';
+            const textHex = post.category?.titleColor?.hex || post.category?.textColor?.hex || '#111827';
+            const bgHex = post.category?.bgColor?.hex || '#ffffff';
             
             return (
-              <a href={`/blog/${post.slug?.current}`} key={post._id} style={{ border: `2px solid ${themeHex}`, borderRadius: "8px", padding: "15px", color: "inherit", textDecoration: "none" }}>
+              <a href={`/blog/${post.slug?.current}`} key={post._id} style={{ backgroundColor: bgHex, border: `2px solid ${borderHex}`, borderRadius: "8px", padding: "15px", color: textHex, textDecoration: "none" }}>
                 
                 {post.category && (
-                  <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: themeHex, marginBottom: "10px", textTransform: "uppercase" }}>
+                  <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: borderHex, marginBottom: "10px", textTransform: "uppercase" }}>
                     {post.category.title}
                   </div>
                 )}
@@ -75,8 +78,8 @@ export default async function Home() {
                   />
                 )}
                 
-                <h3 style={{ margin: "0 0 10px 0" }}>{post.title}</h3>
-                <p style={{ color: themeHex, fontSize: "0.9rem", margin: 0, marginTop: "auto" }}>Read more →</p>
+                <h3 style={{ margin: "0 0 10px 0", color: textHex }}>{post.title}</h3>
+                <p style={{ color: borderHex, fontSize: "0.9rem", margin: 0, marginTop: "auto" }}>Read more →</p>
               </a>
             );
           })}

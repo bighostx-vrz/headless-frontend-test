@@ -1,13 +1,25 @@
 import './globals.css';
-import { VisualEditing } from 'next-sanity/visual-editing'
-import { client } from '../sanity' 
+import { VisualEditing } from 'next-sanity/visual-editing';
+import { client } from '../sanity';
+import { draftMode } from 'next/headers'; // Added draftMode import
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  
-  // 1. Fetch the Site Settings document from Sanity
-  const settings = await client.fetch(`*[_type == "siteSettings"][0]`);
+  // 1. Check if Draft Mode is active
+  const draft = await draftMode();
+  const isEnabled = draft.isEnabled;
 
-  // 2. Set Fallback Fonts (just in case the editor hasn't saved settings yet)
+  // 2. Fetch the Site Settings document from Sanity (tied to Draft Mode!)
+  const settings = await client.fetch(
+    `*[_type == "siteSettings"][0]`,
+    {},
+    {
+      stega: isEnabled, // Hides Stega from public visitors
+      cache: 'no-store',
+      perspective: isEnabled ? 'previewDrafts' : 'published'
+    }
+  );
+
+  // 3. Set Fallback Fonts (just in case the editor hasn't saved settings yet)
   const hFont = settings?.headingFont || 'Arial, sans-serif';
   const hWeight = settings?.headingWeight || 'bold';
   const bFont = settings?.bodyFont || 'Arial, sans-serif';
@@ -15,7 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <head>
-        {/* 3. THE GLOBAL TYPOGRAPHY ENGINE */}
+        {/* 4. THE GLOBAL TYPOGRAPHY ENGINE */}
         <style dangerouslySetInnerHTML={{
           __html: `
             :root {
@@ -67,7 +79,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <p style={{ margin: 0 }}>{settings?.footerText || "© 2026 Default Footer."}</p>
         </footer>
 
-        <VisualEditing />
+        {/* Conditionally render the Visual Editing script ONLY for drafts */}
+        {isEnabled && <VisualEditing />}
       </body>
     </html>
   );

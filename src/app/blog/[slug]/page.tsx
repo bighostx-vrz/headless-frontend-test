@@ -19,8 +19,9 @@ export default async function BlogPost(props: { params: Promise<{ slug: string }
       category->
     }`,
     { slug: slug },
+    // FIXED: Stega is now tied to isEnabled!
     {
-      stega: true,
+      stega: isEnabled, 
       cache: 'no-store',
       perspective: isEnabled ? 'previewDrafts' : 'published'
     }
@@ -30,12 +31,10 @@ export default async function BlogPost(props: { params: Promise<{ slug: string }
     return <div style={{ padding: "50px", textAlign: "center" }}>Post not found!</div>;
   }
 
-  // Map the colors perfectly
+  // Exact schema match for colors
   const bgColor = postData.category?.bgColor?.hex || '#ffffff'; 
   const textColor = postData.category?.textColor?.hex || '#111827'; 
   const accentColor = postData.category?.accentColor?.hex || '#3B82F6'; 
-  
-  // NEW: Title Color Mapping (with a safe fallback to textColor)
   const titleColor = postData.category?.titleColor?.hex || textColor;
 
   const renderBody = () => {
@@ -69,7 +68,6 @@ export default async function BlogPost(props: { params: Promise<{ slug: string }
             </span>
           )}
 
-          {/* NEW: Title Color Applied Here! */}
           <h1 style={{ fontSize: "2.5rem", margin: "15px 0 20px 0", color: titleColor }}>
             {postData.title}
           </h1>
