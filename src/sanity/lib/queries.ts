@@ -93,8 +93,10 @@ const timelineV1Projection=`timelineAccentColorV1,timelineAlternateStartV1,timel
 // v6.1 canonical BigHostX Web Section projection. The array-row _key is retained
 // separately by each page/category/post projection so a repeated reference still
 // receives a unique frontend scope/DOM id for that render instance.
-export const expandedWebSection=`// Explicit bounded Core Web Section projection; keep in sync with renderer fields.
-  ${benefitsV1Projection},
+// Explicit bounded Core Web Section projection; keep in sync with renderer fields.
+// IMPORTANT: keep comments outside the GROQ template literal. This fragment is
+// interpolated into popup/page/post queries and GROQ does not accept JS // comments.
+export const expandedWebSection=`${benefitsV1Projection},
   ${countdownV1Projection},
   ${socialMediaV1Projection},
   ${textCardsV1Projection},
