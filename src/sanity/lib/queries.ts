@@ -155,8 +155,14 @@ const webSectionStack=(field='sections')=>`"${field}":${field}[]{_key,"section":
 // v6.0.1 compatibility projections. They remain queryable until the migration is
 // certified; the visible Studio workflow no longer creates these block types.
 const expandedLegacySection=`...,
-  design{...,"stylePreset":stylePreset->{title,design{...}}},
-  "linkedContent":linkedContent[]->{_id,_type,title,slug,excerpt,"image":coalesce(mainImage,image),"fileUrl":file.asset->url},
+  design{
+    stylePreset->{title,design{...}},
+    theme,width,desktopColumns,tabletColumns,mobileColumns,gap,spacing,textAlign,verticalAlign,
+    backgroundType,backgroundColor,gradientFrom,gradientTo,gradientAngle,backgroundImage,overlayOpacity,
+    headingColor,textColor,accentColor,headingSize,bodySize,borderStyle,borderColor,radius,shadow,minHeight,
+    hideDesktop,hideTablet,hideMobile
+  },
+  linkedContent[]->{_id,_type,title,slug,excerpt,"image":coalesce(mainImage,image),"fileUrl":file.asset->url},
   cards[]{...,link{...}},
   ${flexibleV1Projection}
 `
