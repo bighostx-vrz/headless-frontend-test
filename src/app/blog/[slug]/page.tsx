@@ -1,100 +1,79 @@
-import { client, urlFor } from "../../../sanity";
-import { draftMode } from 'next/headers';
-import Hero from "../../../components/Hero";
-import DynamicForm from "../../../components/DynamicForm";
-import HtmlBlock from "../../../components/HtmlBlock";
+import type {Metadata} from 'next'
+import type {CSSProperties} from 'react'
+import Image from 'next/image'
+import {PortableText} from '@portabletext/react'
+import {stegaClean} from 'next-sanity'
+import {notFound} from 'next/navigation'
+import PageBuilder from '@/components/PageBuilder'
+import WebPageSections from '@/components/WebPageSections'
+import DynamicForm from '@/components/DynamicForm'
+import PostCards from '@/components/PostCards'
+import {sanityFetch} from '@/sanity/lib/fetch'
+import {postBySlugQuery, relatedPostsQuery} from '@/sanity/lib/queries'
+import {urlFor} from '@/sanity/lib/image'
 
-export const revalidate = 0;
+type Props = {params: Promise<{slug: string}>}
 
-export default async function BlogPost(props: { params: Promise<{ slug: string }> }) {
-  const params = await props.params;
-  const slug = params.slug;
-
-  const draft = await draftMode();
-  const isEnabled = draft.isEnabled;
-
-  const postData = await client.fetch(
-    `*[_type == "post" && slug.current == $slug][0]{
-      ...,
-      category->
-    }`,
-    { slug: slug },
-    // FIXED: Stega is now tied to isEnabled!
-    {
-      stega: isEnabled, 
-      cache: 'no-store',
-      perspective: isEnabled ? 'previewDrafts' : 'published'
-    }
-  );
-
-  if (!postData) {
-    return <div style={{ padding: "50px", textAlign: "center" }}>Post not found!</div>;
+export async function generateMetadata({params}: Props): Promise<Metadata> {
+  const {slug} = await params
+  const post = await sanityFetch<any>(postBySlugQuery, {slug}, {stega:false})
+  return {
+    title: stegaClean(post?.seoTitle || post?.title || ''),
+    description: stegaClean(post?.seoDescription || post?.excerpt || ''),
+    alternates: post?.canonicalUrl ? {canonical: stegaClean(post.canonicalUrl)} : undefined,
+    openGraph: post?.ogImage?.asset ? {images: [urlFor(post.ogImage).width(1200).height(630).url()]} : undefined,
+    robots: post?.noIndex || post?.noFollow ? {index: !post?.noIndex, follow: !post?.noFollow} : undefined,
   }
+}
 
-  // Exact schema match for colors
-  const bgColor = postData.category?.bgColor?.hex || '#ffffff'; 
-  const textColor = postData.category?.textColor?.hex || '#111827'; 
-  const accentColor = postData.category?.accentColor?.hex || '#3B82F6'; 
-  const titleColor = postData.category?.titleColor?.hex || textColor;
+export default async function BlogPost({params}: Props) {
+  const {slug} = await params
+  const post = await sanityFetch<any>(postBySlugQuery, {slug})
+  if (!post) notFound()
 
-  const renderBody = () => {
-    if (!postData.body) return null;
-    if (typeof postData.body === 'string') {
-      return <p>{postData.body}</p>;
-    }
-    return (
-      <div style={{ padding: "20px", backgroundColor: "#f3f4f6", color: "#000", borderRadius: "8px" }}>
-        <p>⚠️ <strong>Legacy Rich Text Detected</strong></p>
-      </div>
-    );
-  };
+  const category = post.primaryCategory || post.legacyCategory || {}
+  const useTemplate = post.useCategoryTemplate !== false
+  const related = useTemplate && category.showRelatedPosts && category._id
+    ? await sanityFetch<any[]>(relatedPostsQuery, {id: post._id, categoryId: category._id})
+    : []
+
+  const style = {
+    '--category-bg': category.bgColor?.hex || (stegaClean(category.postTheme) === 'dark' ? '#080b16' : '#ffffff'),
+    '--category-text': category.textColor?.hex || (stegaClean(category.postTheme) === 'dark' ? '#e8eaf1' : '#344054'),
+    '--category-title': category.titleColor?.hex || (stegaClean(category.postTheme) === 'dark' ? '#ffffff' : '#101828'),
+    '--category-accent': category.accentColor?.hex || 'var(--accent-color)',
+    '--post-width': stegaClean(category.contentWidth || '960px'),
+  } as CSSProperties
+
+  const heroLayout = stegaClean(category.postHeroLayout || 'stacked')
+  const showImage = !useTemplate || category.showFeaturedImage !== false
+  const showCategory = !useTemplate || category.showCategoryLabel !== false
 
   return (
-    <main style={{ backgroundColor: bgColor, color: textColor, minHeight: "100vh" }}>
-      <div style={{ maxWidth: "1000px", margin: "0 auto", padding: "50px" }}>
-        
-        {isEnabled && (
-          <div style={{ backgroundColor: "#FEF08A", color: "#854D0E", padding: "10px 20px", borderRadius: "6px", marginBottom: "20px", fontWeight: "bold" }}>
-            ⚡ You are viewing an unpublished draft! 
-            <a href={`/api/disable-draft?slug=/blog/${slug}`} style={{ color: "#854D0E", marginLeft: "10px" }}>[Exit]</a>
+    <article className={`blog-post post-theme-${stegaClean(category.postTheme || 'light')} post-hero-${heroLayout}`} style={style}>
+      {useTemplate && (category.templateBeforeSections?.length?<WebPageSections sections={category.templateBeforeSections}/>:<PageBuilder blocks={category.templateBefore} />)}
+
+      <div className="post-hero">
+        <div className={`post-width post-hero-layout-${heroLayout}`}>
+          <div className="post-hero-copy">
+            {showCategory && category.title && <a className="eyebrow" href={`/category/${stegaClean(category.slug?.current || '')}`}>{category.title}</a>}
+            <h1>{post.title}</h1>
+            {post.excerpt && <p className="lead">{post.excerpt}</p>}
           </div>
-        )}
-
-        <article style={{ borderTop: `8px solid ${accentColor}`, paddingTop: "20px" }}>
-          
-          {postData.category && (
-            <span style={{ backgroundColor: accentColor, color: bgColor, padding: "4px 12px", borderRadius: "20px", fontSize: "0.8rem", fontWeight: "bold" }}>
-              {postData.category.title}
-            </span>
-          )}
-
-          <h1 style={{ fontSize: "2.5rem", margin: "15px 0 20px 0", color: titleColor }}>
-            {postData.title}
-          </h1>
-          
-          {postData.mainImage?.asset && (
-            <img 
-              src={urlFor(postData.mainImage).width(1200).url()} 
-              alt={postData.title}
-              style={{ width: "100%", borderRadius: "12px", marginBottom: "40px" }}
-            />
-          )}
-
-          <div style={{ lineHeight: "1.8", fontSize: "1.1rem", marginBottom: "40px" }}>
-            {renderBody()}
-          </div>
-          
-          {/* Page Builder */}
-          {postData?.pageBuilder?.map((block: any, index: number) => {
-            switch (block._type) {
-              case 'heroSection': return <Hero key={index} data={block} />;
-              case 'formComponent': return <DynamicForm key={index} formData={block} />;
-              case 'htmlBlock': return <HtmlBlock key={index} data={block} />;
-              default: return null;
-            }
-          })}
-        </article>
+          {showImage && post.mainImage?.asset && <Image className="post-featured-image" src={urlFor(post.mainImage).width(1600).height(900).url()} alt={post.title || ''} width={1600} height={900} priority />}
+        </div>
       </div>
-    </main>
-  );
+
+      <div className="post-body post-width rich-text">
+        {Array.isArray(post.richBody) ? <PortableText value={post.richBody} /> : post.body ? <p>{post.body}</p> : null}
+      </div>
+
+      {post.sections?.length?<WebPageSections sections={post.sections}/>:<PageBuilder blocks={post.pageBuilder} />}
+      {useTemplate && (category.templateAfterSections?.length?<WebPageSections sections={category.templateAfterSections}/>:<PageBuilder blocks={category.templateAfter} />)}
+      {useTemplate && category.defaultForm && <DynamicForm form={category.defaultForm} />}
+
+      {related?.length > 0 && <section className="content-section related-posts"><div className="section-inner width-contained"><h2>Related posts</h2><PostCards posts={related.map((item) => ({...item, category}))} /></div></section>}
+      {post.enableQr && <div className="qr-link"><a href={`/api/qr?url=${encodeURIComponent(`/blog/${slug}`)}`}>Generate QR for this post</a></div>}
+    </article>
+  )
 }

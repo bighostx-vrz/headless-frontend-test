@@ -1,0 +1,3 @@
+import {SectionHeaderV1} from './WebSectionStaticV1'
+import TabsRuntimeV1 from './TabsRuntimeV1'
+export default function TabsV1({data,instanceKey}:{data:any;instanceKey:string}){const legacy=Array.isArray(data?.items)?data.items.filter((x:any)=>x?.enabled!==false).map((x:any)=>({_key:x._key,label:x.eyebrow||x.title,title:x.title,text:x.text,image:x.image,icon:x.iconText})):[];const items=(Array.isArray(data?.tabsItemsV1)&&data.tabsItemsV1.length?data.tabsItemsV1:legacy).slice(0,60);return <><SectionHeaderV1 data={data}/>{items.length?<TabsRuntimeV1 items={items} data={data} instanceKey={`bhx-tabs-${instanceKey}`}/>:<p className="bhx-v1-empty">No tabs configured.</p>}</>}

@@ -1,45 +1,55 @@
-import { urlFor } from "../sanity";
+import type {CSSProperties} from 'react'
+import Image from 'next/image'
+import {PortableText} from '@portabletext/react'
+import {urlFor} from '@/sanity/lib/image'
+import {stegaClean} from 'next-sanity'
 
-export default function SectionBlock({ data }: { data: any }) {
-  const { 
-    width, bgType, bgColor, bgGradient, bgImage, 
-    overlayColor, overlayOpacity, textColor, textContent 
-  } = data;
+function colorValue(value: any) {
+  return value?.hex || undefined
+}
 
-  let bgStyle: any = { position: 'relative' };
-  
-  if (bgType === 'solid' && bgColor?.hex) {
-    bgStyle.backgroundColor = bgColor.hex;
+export default function SectionBlock({data}: {data: any}) {
+  if (!data) return null
+  const theme = stegaClean(data.theme || 'light')
+  const width = stegaClean(data.width || 'contained')
+  const layout = stegaClean(data.layout || 'text')
+  const spacing = stegaClean(data.spacing || 'global')
+
+  const legacyBgType = stegaClean(data.bgType || '')
+  const customStyle: CSSProperties = {
+    ...(theme === 'custom' ? {
+      backgroundColor: colorValue(data.backgroundColor) || colorValue(data.bgColor),
+      color: colorValue(data.textColor),
+    } : {}),
   }
-  if (bgType === 'gradient' && bgGradient) {
-    bgStyle.backgroundImage = bgGradient;
+
+  if (!customStyle.backgroundColor && legacyBgType === 'solid' && data.bgColor?.hex) customStyle.backgroundColor = data.bgColor.hex
+  if (legacyBgType === 'gradient' && data.bgGradient) customStyle.background = stegaClean(data.bgGradient)
+
+  const backgroundImage = data.backgroundImage?.asset ? data.backgroundImage : data.bgImage?.asset ? data.bgImage : null
+  if (backgroundImage) {
+    const opacity = Number(data.overlayOpacity || 0)
+    const overlayHex = colorValue(data.overlayColor) || '#000000'
+    // Keep the original overlay control concept while using a safe CSS color-mix fallback.
+    customStyle.backgroundImage = `linear-gradient(color-mix(in srgb, ${overlayHex} ${Math.round(opacity * 100)}%, transparent), color-mix(in srgb, ${overlayHex} ${Math.round(opacity * 100)}%, transparent)), url(${urlFor(backgroundImage).width(1800).url()})`
+    customStyle.backgroundSize = 'cover'
+    customStyle.backgroundPosition = 'center'
   }
-  if (bgType === 'image' && bgImage?.asset) {
-    bgStyle.backgroundImage = `url(${urlFor(bgImage).url()})`;
-    bgStyle.backgroundSize = 'cover';
-    bgStyle.backgroundPosition = 'center';
-  }
-
-  const hasOverlay = bgType === 'image' && overlayColor?.hex;
-  const overlayHex = overlayColor?.hex || '#000000';
-  const opacity = overlayOpacity !== undefined ? overlayOpacity : 0.5;
-
-  let maxWidth = '1000px';
-  if (width === 'full') maxWidth = '100%';
-  if (width === 'narrow') maxWidth = '700px';
-
-  const tColor = textColor?.hex || 'inherit';
 
   return (
-    <section style={{ ...bgStyle, color: tColor, width: '100%' }}>
-      {hasOverlay && (
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: overlayHex, opacity: opacity, zIndex: 1 }} />
-      )}
-      <div style={{ position: 'relative', zIndex: 2, maxWidth: maxWidth, margin: '0 auto', padding: '60px 20px' }}>
-        <div style={{ whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
-          {textContent}
+    <section className={`content-section theme-${theme} spacing-${spacing}`} style={customStyle}>
+      <div className={`section-inner width-${width} layout-${layout}`} style={{textAlign: stegaClean(data.textAlign || 'left')}}>
+        <div className="section-copy">
+          {data.eyebrow && <div className="eyebrow">{data.eyebrow}</div>}
+          {data.heading && <h2>{data.heading}</h2>}
+          {Array.isArray(data.body) && <div className="rich-text"><PortableText value={data.body} /></div>}
+          {!data.body && data.textContent && <p>{data.textContent}</p>}
+          {data.buttonText && data.buttonUrl && <a className="button" href={stegaClean(data.buttonUrl) || '#'}>{data.buttonText}</a>}
         </div>
+        {data.image?.asset && (
+          <Image className="section-image" src={urlFor(data.image).width(1000).height(700).url()} alt={data.heading || ''} width={700} height={490} />
+        )}
       </div>
     </section>
-  );
+  )
 }

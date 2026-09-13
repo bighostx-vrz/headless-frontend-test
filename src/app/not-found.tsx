@@ -1,0 +1,1 @@
+export default function NotFound(){return <section className="collection-page"><div className="section-inner width-contained"><span className="eyebrow">404</span><h1>Page not found.</h1><p>The requested learning page does not exist or is no longer available.</p><a className="button" href="/">Go home</a></div></section>}

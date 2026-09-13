@@ -1,0 +1,1 @@
+export function formsV1Css(id:string,_d:any){return `#${id} .bhx-forms-v1{width:min(100%,900px);margin-inline:auto}#${id} .bhx-form-message{margin-top:12px}#${id} form{max-width:100%}@media(max-width:767px){#${id} .bhx-forms-v1{width:100%}}`}

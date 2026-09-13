@@ -1,0 +1,15 @@
+const clean=(value:any)=>String(value??'').trim().toLowerCase().replace(/[^a-z0-9_-]+/g,'-')
+const color=(value:any,fallback:string)=>value?.hex?String(value.hex):fallback
+const clamp=(value:any,fallback:number,min:number,max:number)=>Math.max(min,Math.min(max,Number.isFinite(Number(value))?Number(value):fallback))
+
+export function faqV1Css(id:string,data:any){
+  const style=['clean','card','bordered'].includes(clean(data?.faqItemStyleV1))?clean(data?.faqItemStyleV1):'clean'
+  const radius=clamp(data?.faqItemRadiusV1,10,0,80)
+  const desktop=clamp(data?.faqColumnsDesktopV1,1,1,2)
+  const tablet=clamp(data?.faqColumnsTabletV1,1,1,2)
+  const question=color(data?.faqQuestionColorV1,'#111827')
+  const answer=color(data?.faqAnswerColorV1,'#4b5563')
+  const active=color(data?.faqActiveColorV1,'#4f46e5')
+  const shell=style==='card'?'background:color-mix(in srgb,currentColor 4%,transparent);border:1px solid transparent;padding:0 16px;':style==='bordered'?'border:1px solid color-mix(in srgb,currentColor 20%,transparent);padding:0 16px;':'border-top:1px solid color-mix(in srgb,currentColor 20%,transparent);'
+  return `#${id} .bhx-faq-section-v1{min-width:0}#${id} .bhx-faq-layout-side_content{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(28px,5vw,56px);align-items:start}#${id} .bhx-faq-intro{min-width:0}#${id} .bhx-faq-v1{display:grid;grid-template-columns:repeat(${desktop},minmax(0,1fr));gap:12px;min-width:0}#${id} .bhx-faq-row{min-width:0;border-radius:${radius}px;${shell}}#${id} .bhx-faq-question-heading{margin:0;font:inherit}#${id} .bhx-faq-question-heading>button{width:100%;min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:20px;text-align:left;background:none;border:0;color:${question};font:inherit;font-weight:750;padding:18px 0;cursor:pointer}#${id} .bhx-faq-question-heading>button[aria-expanded=true]{color:${active}}#${id} .bhx-faq-question-heading>button:focus-visible{outline:3px solid ${active};outline-offset:3px;border-radius:max(4px,${Math.min(radius,12)}px)}#${id} .bhx-faq-icon{display:inline-grid;place-items:center;flex:0 0 24px;width:24px;height:24px;color:currentColor;transition:transform .18s ease}#${id} .bhx-faq-icon svg{width:20px;height:20px;display:block}#${id} .bhx-faq-icon-plus.is-open .bhx-faq-icon-vertical{display:none}#${id} .bhx-faq-icon-chevron .bhx-faq-icon.is-open,#${id} .bhx-faq-icon-arrow .bhx-faq-icon.is-open{transform:rotate(180deg)}#${id} .bhx-faq-answer-panel{color:${answer};padding:0 0 18px}#${id} .bhx-faq-answer{margin:0;white-space:pre-line}#${id} .bhx-faq-empty{padding:18px;border:1px dashed color-mix(in srgb,currentColor 30%,transparent);border-radius:${radius}px}@media(max-width:900px){#${id} .bhx-faq-v1{grid-template-columns:repeat(${tablet},minmax(0,1fr))}}@media(max-width:767px){#${id} .bhx-faq-layout-side_content{grid-template-columns:minmax(0,1fr);gap:24px}#${id} .bhx-faq-v1{grid-template-columns:minmax(0,1fr)}#${id} .bhx-faq-question-heading>button{min-height:44px;padding:16px 0}}@media(prefers-reduced-motion:reduce){#${id} .bhx-faq-icon{transition:none!important}}`
+}

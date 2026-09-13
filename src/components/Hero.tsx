@@ -1,24 +1,29 @@
-export default function Hero({ data }: { data: any }) {
-  if (!data) return null;
+import Image from 'next/image'
+import {urlFor} from '@/sanity/lib/image'
+import {stegaClean} from 'next-sanity'
+
+export default function Hero({data}: {data: any}) {
+  if (!data) return null
+  const theme = stegaClean(data.theme || 'dark')
+  const alignment = stegaClean(data.alignment || 'left')
+  const height = stegaClean(data.height || 'standard')
 
   return (
-    <div style={{ padding: "80px 40px", backgroundColor: "#111827", borderRadius: "10px", textAlign: "center", marginBottom: "40px", marginTop: "40px" }}>
-      
-      {/* We override the global h1 color here so it shows up on the dark background! */}
-      <h1 style={{ color: "white", margin: "0 0 20px 0", fontSize: "3.5rem" }}>
-        {data.heading}
-      </h1>
-      
-      <p style={{ fontSize: "1.3rem", margin: "0 0 30px 0", color: "#9CA3AF" }}>
-        {data.tagline}
-      </p>
-      
-      {data.buttonText && data.buttonUrl && (
-        <a href={data.buttonUrl} style={{ backgroundColor: "#3B82F6", color: "white", padding: "15px 30px", borderRadius: "5px", textDecoration: "none", fontWeight: "bold", display: "inline-block" }}>
-          {data.buttonText}
-        </a>
-      )}
-      
-    </div>
-  );
+    <section className={`hero theme-${theme} hero-${height}`} style={{textAlign: alignment}}>
+      <div className={data.media?.asset ? 'hero-grid' : 'hero-single'}>
+        <div>
+          {data.eyebrow && <div className="eyebrow">{data.eyebrow}</div>}
+          <h1>{data.heading}</h1>
+          {data.tagline && <p className="hero-copy">{data.tagline}</p>}
+          <div className="button-row">
+            {data.buttonText && data.buttonUrl && <a className="button" href={stegaClean(data.buttonUrl) || '#'}>{data.buttonText}</a>}
+            {data.secondaryButtonText && data.secondaryButtonUrl && <a className="button button-secondary" href={stegaClean(data.secondaryButtonUrl) || '#'}>{data.secondaryButtonText}</a>}
+          </div>
+        </div>
+        {data.media?.asset && (
+          <Image className="hero-image" src={urlFor(data.media).width(1200).height(800).url()} alt={data.heading || ''} width={760} height={500} />
+        )}
+      </div>
+    </section>
+  )
 }

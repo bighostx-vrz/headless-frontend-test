@@ -1,0 +1,5 @@
+import {NextRequest,NextResponse} from 'next/server'
+const projectId=process.env.NEXT_PUBLIC_SANITY_PROJECT_ID||'e3kyrsn9';const dataset=process.env.NEXT_PUBLIC_SANITY_DATASET||'testing';const apiVersion='2026-08-01';const readToken=process.env.SANITY_API_READ_TOKEN
+async function query(groq:string){const url=`https://${projectId}.api.sanity.io/v${apiVersion}/data/query/${dataset}?query=${encodeURIComponent(groq)}`;const response=await fetch(url,{headers:readToken?{Authorization:`Bearer ${readToken}`} : undefined,next:{revalidate:60}});if(!response.ok)return null;return(await response.json()).result}
+export async function proxy(request:NextRequest){const path=request.nextUrl.pathname;if(path.startsWith('/_next')||path.startsWith('/api')||path.includes('.'))return NextResponse.next();const redirect=await query(`*[_type=="redirect"&&enabled==true&&from==${JSON.stringify(path)}][0]{to,permanent}`);if(redirect?.to)return NextResponse.redirect(new URL(redirect.to,request.url),redirect.permanent?308:307);return NextResponse.next()}
+export const config={matcher:['/((?!_next/static|_next/image|favicon.ico).*)']}

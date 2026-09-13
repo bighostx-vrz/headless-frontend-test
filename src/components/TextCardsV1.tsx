@@ -1,0 +1,7 @@
+import Image from 'next/image'
+import {urlFor} from '@/sanity/lib/image'
+import V1Icon from './V1Icon'
+import {SectionActions,SectionHeaderV1} from './WebSectionStaticV1'
+const safe=(v:any)=>{const s=String(v??'').trim();return s.startsWith('#')||s.startsWith('/')||/^(https?:|mailto:|tel:)/i.test(s)?s:''}
+function Card({x}:{x:any}){const h=safe(x?.url),blank=String(x?.linkTarget||'new')==='new';const inner=<>{x?.image?.asset&&<Image src={urlFor(x.image).width(720).height(480).url()} alt={String(x?.title||'')} width={720} height={480}/>} {x?.icon&&<V1Icon name={x.icon}/>} {x?.eyebrow&&<span className="eyebrow">{x.eyebrow}</span>}{x?.title&&<h3>{x.title}</h3>}{x?.text&&<p>{x.text}</p>}{x?.linkText&&h&&<span className="text-link">{x.linkText} →</span>}</>;return h?<a className="bhx-text-card" href={h} target={blank?'_blank':undefined} rel={blank?'noopener noreferrer':undefined}>{inner}</a>:<article className="bhx-text-card">{inner}</article>}
+export default function TextCardsV1({data}:{data:any}){const legacy=Array.isArray(data?.items)?data.items.filter((x:any)=>x?.enabled!==false):[];const items=(Array.isArray(data?.textCardsItemsV1)&&data.textCardsItemsV1.length?data.textCardsItemsV1:legacy).slice(0,100);const balance=String(data?.textCardsBalanceV1||'40/60').replace('/','-');return <div className={`bhx-text-cards bhx-v1-balance-${balance}`}><div className="bhx-text-cards-copy"><SectionHeaderV1 data={data}/><SectionActions data={data}/></div><div className="bhx-text-cards-grid">{items.map((x:any,i:number)=><Card key={x?._key||i} x={x}/>)}</div></div>}
