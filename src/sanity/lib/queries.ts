@@ -36,8 +36,8 @@ const stickyNavV1Projection=`stickyNavEnabledV1,stickyNavOffsetV1,stickyNavShowA
 // unbounded arrays; the image payload is kept explicit and embed markup stays a string.
 const contactV1Projection=`contactAddressV1,contactPhoneV1,contactEmailV1,contactHoursV1,contactMapUrlV1,mapUrl,contactLayoutV1,contactMapTypeV1,contactMapHeightDesktopV1,contactMapHeightMobileV1,contactBoxRadiusV1,contactBoxBackgroundV1,contactLayoutMobileV1,contactMapImageV1{asset,crop,hotspot}`
 const contentFilterV1Projection=`contentFilterSourceV1,contentFilterAllLabelV1,contentFilterColumnsV1,contentFilterLayoutV1,contentFilterColumnsTabletV1,contentFilterColumnsMobileV1,contentFilterGapV1,contentFilterCardRadiusV1,contentFilterCardPaddingV1,contentFilterCardAlignV1,contentFilterTabRadiusV1,contentFilterSearchV1,contentFilterLastRowAlignDesktopV1,contentFilterLastRowAlignTabletV1,contentFilterLastRowAlignMobileV1,
-  "contentFilterCategoriesV1":contentFilterCategoriesV1[0...40]->{_id,title,slug},
-  "contentFilterPostsV1":contentFilterPostsV1[0...120]->{_id,title,slug,excerpt,mainImage{asset,crop,hotspot},"image":mainImage{asset,crop,hotspot},"category":coalesce(primaryCategory,category)->{title,slug}},
+  "contentFilterCategoriesV1":contentFilterCategoriesV1[0...40][]->{_id,title,slug},
+  "contentFilterPostsV1":contentFilterPostsV1[0...120][]->{_id,title,slug,excerpt,mainImage{asset,crop,hotspot},"image":mainImage{asset,crop,hotspot},"category":select(defined(primaryCategory)=>primaryCategory->{title,slug},defined(category)=>category->{title,slug})},
   "contentFilterItemsV1":contentFilterItemsV1[0...120]{_key,_type,category,title,text,image{asset,crop,hotspot},url,linkText,linkTarget}`
 
 const albumV1Projection=`albumColumnsV1,albumLightboxV1,albumColumnsTabletV1,albumColumnsMobileV1,albumGapV1,albumRadiusV1,albumHoverScaleV1,albumTitleColorV1,albumLastRowAlignDesktopV1,albumLastRowAlignTabletV1,albumLastRowAlignMobileV1,
@@ -143,9 +143,9 @@ export const expandedWebSection=`${benefitsV1Projection},
   items[]{...,link{...}},
   newsMagazineLayoutV1,newsMagazineColumnsV1,newsMagazineColumnsTabletV1,newsMagazineShowExcerptV1,newsMagazineShowImageV1,profileShowcaseColumnsV1,profileShowcaseCardStyleV1,commerceColumnsV1,commerceColumnsTabletV1,commerceShowPriceV1,commerceShowHighlightsV1,
   "commerceProductCategoriesV1":commerceProductCategoriesV1[0...40],
-  "newsMagazinePostsV1":newsMagazinePostsV1[0...24]->{_id,title,slug,excerpt,"imageUrl":mainImage.asset->url},
-  "profileShowcaseItemsV1":profileShowcaseItemsV1[0...60]->{_id,name,designation,department,bio,email,phone,url,"imageUrl":photo.asset->url},
-  "commerceProductsV1":commerceProductsV1[0...40]->{_id,title,slug,category,summary,price,compareAtPrice,"highlights":highlights[0...20],"specs":specs[0...40]{_key,label,value},url,"imageUrl":image.asset->url},
+  "newsMagazinePostsV1":newsMagazinePostsV1[0...24][]->{_id,title,slug,excerpt,"imageUrl":mainImage.asset->url},
+  "profileShowcaseItemsV1":profileShowcaseItemsV1[0...60][]->{_id,name,designation,department,bio,email,phone,url,"imageUrl":photo.asset->url},
+  "commerceProductsV1":commerceProductsV1[0...40][]->{_id,title,slug,category,summary,price,compareAtPrice,"highlights":highlights[0...20],"specs":specs[0...40]{_key,label,value},url,"imageUrl":image.asset->url},
   "commerceProductHeroV1":commerceProductHeroV1->{_id,title,slug,category,summary,price,compareAtPrice,"highlights":highlights[0...20],"specs":specs[0...40]{_key,label,value},url,"imageUrl":image.asset->url},
   richText[]{...}
 `
