@@ -51,7 +51,11 @@ function motif(style:string,colorHex:string,opacity:number,rotation:number){
 function seedFloat(seed:number,index:number,channel:number){let x=(seed>>>0)^(index*2654435761)^(channel*1597334677);x^=x<<13;x^=x>>>17;x^=x<<5;return (x>>>0)/4294967295}
 function patternCss(data:any){
  let mode=String(data.patternModeV1||'repeat');if(mode==='repeat'&&String(data.patternVariationV1||'uniform')==='random')mode='scatter'
- const style=String(data.patternTypeV1||'dots'),bg=color(data.patternBackgroundColorV1,color(data.backgroundColor,'#f8fafc')),fg=color(data.patternColorV1,'#4f46e5')
+ const category=String(data.patternCategoryV1||'pattern')==='shape'?'shape':'pattern'
+ const patternStyles=new Set(['dots','staggered_dots','grid','dashed_grid','diagonal_lines','horizontal_lines','vertical_lines','crosshatch','checker','brick','chevron','zigzag','waves','scales','honeycomb','lattice','concentric_rings','circuit'])
+ const shapeStyles=new Set(['circle','ring','oval','square','rounded_square','capsule','diamond','triangle','star','sparkle','plus','hexagon','arch','heart','crescent','teardrop','flower','organic'])
+ const savedStyle=String(data.patternTypeV1||'')
+ const style=category==='shape'?(shapeStyles.has(savedStyle)?savedStyle:'circle'):(patternStyles.has(savedStyle)?savedStyle:'dots'),bg=color(data.patternBackgroundColorV1,color(data.backgroundColor,'#f8fafc')),fg=color(data.patternColorV1,'#4f46e5')
  const size=clamp(data.patternSizeV1,4,1200,mode==='single'?360:18),sx=clamp(data.patternSpacingXV1,0,400,24),sy=clamp(data.patternSpacingYV1,0,400,24),ox=clamp(data.patternOffsetXV1,-500,500,0),oy=clamp(data.patternOffsetYV1,-500,500,0),op=clamp(data.patternOpacityV1,0,1,.35),rot=clamp(data.patternRotationV1,-180,180,0)
  if(mode==='single'){
   const posMap:Record<string,string>={'top-left':'0% 0%','top-center':'50% 0%','top-right':'100% 0%','center-left':'0% 50%',center:'50% 50%','center-right':'100% 50%','bottom-left':'0% 100%','bottom-center':'50% 100%','bottom-right':'100% 100%'}
@@ -60,7 +64,8 @@ function patternCss(data:any){
  }
  if(mode==='scatter'){
   const seed=Math.floor(clamp(data.patternRandomSeedV1,1,2147483647,48271)),density=String(data.patternScatterDensityV1||'balanced'),n=density==='sparse'?18:density==='dense'?54:32,strength=String(data.patternVariationStrengthV1||'balanced'),spread=strength==='subtle'?.16:strength==='bold'?.45:.3
-  let items='';for(let i=0;i<n;i++){const x=4+seedFloat(seed,i,1)*92,y=4+seedFloat(seed,i,2)*92,scale=data.patternRandomSizeV1===false?1:(1-spread)+seedFloat(seed,i,3)*spread*2,rr=data.patternRandomRotationV1===false?rot:rot+(seedFloat(seed,i,4)*2-1)*(strength==='bold'?75:strength==='subtle'?18:40),oo=data.patternRandomOpacityV1===false?op:Math.max(.02,op*((1-spread)+seedFloat(seed,i,5)*spread*2));items+=`<g transform="translate(${x-5} ${y-5}) scale(${Math.max(.15,scale)*.1})">${motif(style,fg,oo,rr)}</g>`}
+  const randomPosition=data.patternRandomPositionV1!==false,cols=Math.max(1,Math.ceil(Math.sqrt(n))),rows=Math.max(1,Math.ceil(n/cols))
+  let items='';for(let i=0;i<n;i++){const col=i%cols,row=Math.floor(i/cols),x=randomPosition?4+seedFloat(seed,i,1)*92:(cols===1?50:5+col*(90/(cols-1))),y=randomPosition?4+seedFloat(seed,i,2)*92:(rows===1?50:5+row*(90/(rows-1))),scale=data.patternRandomSizeV1===false?1:(1-spread)+seedFloat(seed,i,3)*spread*2,rr=data.patternRandomRotationV1===false?rot:rot+(seedFloat(seed,i,4)*2-1)*(strength==='bold'?75:strength==='subtle'?18:40),oo=data.patternRandomOpacityV1===false?op:Math.max(.02,op*((1-spread)+seedFloat(seed,i,5)*spread*2));items+=`<g transform="translate(${x-5} ${y-5}) scale(${Math.max(.15,scale)*.1})">${motif(style,fg,oo,rr)}</g>`}
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">${items}</svg>`
   return `background-color:${bg};background-image:url("${dataUri(svg)}");background-repeat:no-repeat;background-size:cover;background-position:calc(50% + ${ox}px) calc(50% + ${oy}px);`
  }

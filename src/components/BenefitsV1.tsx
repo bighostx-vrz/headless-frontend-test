@@ -6,6 +6,6 @@ const legacy=(data:any)=>Array.isArray(data?.items)?data.items.filter((x:any)=>x
 export default function BenefitsV1({data}:{data:any}){
  const items=(Array.isArray(data?.benefitsItemsV1)&&data.benefitsItemsV1.length?data.benefitsItemsV1:legacy(data)).slice(0,100)
  const showText=data?.benefitsShowTextContentV1===true
- const runtime=data?.benefitsMarqueeEnableV1===true
+ const runtime=data?.benefitsMarqueeEnableV1===true&&items.length>0
  return <>{showText&&<SectionHeaderV1 data={data}/>} {runtime?<BenefitsRuntimeV1 items={items} data={data}/>:<div className="bhx-benefits-grid">{items.map((item:any,i:number)=><BenefitsCardV1 key={item?._key||i} item={item} data={data}/>)}</div>} {showText&&<SectionActions data={data}/>}</>
 }
